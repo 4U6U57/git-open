@@ -168,7 +168,6 @@ setup() {
 ##
 
 @test "sshconfig: basic" {
-  skip
   create_ssh_sandbox
   git remote set-url origin "gh:user/repo.git"
   run ../git-open
@@ -176,11 +175,17 @@ setup() {
 }
 
 @test "sshconfig: with git@" {
-  skip
   create_ssh_sandbox
   git remote set-url origin "git@gl:user/repo.git"
   run ../git-open
   assert_output "https://gitlab.com/user/repo"
+}
+
+@test "sshconfig: no hostname, should fail" {
+  create_ssh_sandbox
+  git remote set-url origin "git@nohost:user/repo.git"
+  run ../git-open
+  assert_output "https://nohost/user/repo"
 }
 
 ##
