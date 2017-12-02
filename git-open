@@ -93,7 +93,7 @@ else
   if [[ -e $sshconfig ]]; then
     domain_resolv=$(awk -v domain="$domain" \
       'tolower($1) == "host" && $2 == domain {found=1}
-      tolower($1) == "host" && tolower($2) != tolower(domain) {found=0}
+      tolower($1) == "host" && $2 != domain {found=0}
       found && tolower($1) == "hostname" {print $2; exit}' \
         ~/.ssh/config)
     # If we are able to resolve domain, overwrite it with the actual hostname
