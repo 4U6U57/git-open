@@ -174,14 +174,21 @@ setup() {
   assert_output --partial "https://github.com/user/repo"
 }
 
-@test "sshconfig: with git@" {
+@test "sshconfig: with git@ and improper casing" {
   create_ssh_sandbox
   git remote set-url origin "git@gl:user/repo.git"
   run ../git-open
   assert_output "https://gitlab.com/user/repo"
 }
 
-@test "sshconfig: no hostname, should fail" {
+@test "sshconfig: inproper capitalization (no match)" {
+  create_ssh_sandbox
+  git remote set-url origin "git@gH:user/repo.git"
+  run ../git-open
+  assert_output "https://gH/user/repo"
+}
+
+@test "sshconfig: host but no hostname (no match)" {
   create_ssh_sandbox
   git remote set-url origin "git@nohost:user/repo.git"
   run ../git-open
@@ -423,23 +430,26 @@ function create_git_sandbox() {
 
 # helper to create test SSH config file
 function create_ssh_sandbox() {
-
   mkdir --parents $(dirname $sshconfig)
   assert [ -d $(dirname $sshconfig) ]
+
   # Back up user's current sshconfig
   [ -e $sshconfig ] && mv $sshconfig $sshconfig~
   refute [ -e $sshconfig ]
-  create_ssh_file >$sshconfig
+
+  # Populate ssh config with test data
+  echo "$sshtest" >$sshconfig
   assert [ -e $sshconfig ]
 }
-function create_ssh_file() {
-cat << _SSH
+
+# SSH test data
+sshtest="
 Host gh
   HostName github.com
   User git
 Host nohost
   User other
 host gl
-  hostname gitlab.com
-_SSH
+  hOsTnAmE gitlab.com
 }
+"
