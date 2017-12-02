@@ -4,6 +4,7 @@ load "test_helper/bats-support/load"
 load "test_helper/bats-assert/load"
 
 foldername="sandboxrepo"
+sshconfig=~/.ssh/config
 
 setup() {
   create_git_sandbox
@@ -162,6 +163,25 @@ setup() {
   assert_output "http://github.com/user/repo"
 }
 
+##
+## SSH config
+##
+
+@test "sshconfig: basic" {
+  skip
+  create_ssh_sandbox
+  git remote set-url origin "gh:user/repo.git"
+  run ../git-open
+  assert_output --partial "https://github.com/user/repo"
+}
+
+@test "sshconfig: with git@" {
+  skip
+  create_ssh_sandbox
+  git remote set-url origin "git@gl:user/repo.git"
+  run ../git-open
+  assert_output "https://gitlab.com/user/repo"
+}
 
 ##
 ## Bitbucket
@@ -365,6 +385,7 @@ setup() {
 teardown() {
   cd ..
   rm -rf "$foldername"
+  [ -e $sshconfig~ ] && mv $sshconfig~ $sshconfig
 }
 
 # helper to create a test git sandbox that won't dirty the real repo
@@ -389,4 +410,27 @@ function create_git_sandbox() {
   echo "ok" > readme.txt
   git add readme.txt
   git commit -m "add file" -q
+}
+
+# helper to create test SSH config file
+function create_ssh_sandbox() {
+
+  mkdir --parents $(dirname $sshconfig)
+  assert [ -d $(dirname $sshconfig) ]
+  # Back up user's current sshconfig
+  [ -e $sshconfig ] && mv $sshconfig $sshconfig~
+  refute [ -e $sshconfig ]
+  create_ssh_file >$sshconfig
+  assert [ -e $sshconfig ]
+}
+function create_ssh_file() {
+cat << _SSH
+Host gh
+  HostName github.com
+  User git
+Host nohost
+  User other
+host gl
+  hostname gitlab.com
+_SSH
 }
