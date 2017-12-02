@@ -385,7 +385,11 @@ setup() {
 teardown() {
   cd ..
   rm -rf "$foldername"
-  [ -e $sshconfig~ ] && mv $sshconfig~ $sshconfig
+  if [ -e $sshconfig~ ]; then
+    mv $sshconfig~ $sshconfig
+    assert [ -e $sshconfig ]
+  fi
+  refute [ -e $sshconfig~ ]
 }
 
 # helper to create a test git sandbox that won't dirty the real repo
