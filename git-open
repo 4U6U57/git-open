@@ -91,13 +91,15 @@ else
   sshconfig=~/.ssh/config
   # Only do this if SSH config file exists
   if [[ -e $sshconfig ]]; then
-    domain_resolv=$(awk -v domain="$domain" \
-      'tolower($1) == "host" && $2 == domain {found=1}
-      tolower($1) == "host" && $2 != domain {found=0}
-      found && tolower($1) == "hostname" {print $2; exit}' \
-        ~/.ssh/config)
+    domain_resolv=$(awk -v host_name="$domain" '
+      tolower($1) == "host" { host_match=0; for(i = 2; i <= NF; i++) if($i == host_name) host_match=1; }
+      host_match && tolower($1) == "hostname" { host_name=$2 }
+      END { print host_name }
+      ' ~/.ssh/config)
     # If we are able to resolve domain, overwrite it with the actual hostname
-    [[ ! -z $domain_resolv ]] && domain=$domain_resolv
+    # We replace any instance of %h in the hostname with the original hostname,
+    # as per the sshconfig spec
+    domain=${domain_resolv//%h/$domain}
   fi
 fi
 

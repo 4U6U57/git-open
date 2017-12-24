@@ -181,6 +181,20 @@ setup() {
   assert_output "https://gitlab.com/user/repo"
 }
 
+@test "sshconfig: multitarget host (primary)" {
+  create_ssh_sandbox
+  git remote set-url origin "hub:user/repo.git"
+  run ../git-open
+  assert_output "https://github.com/user/repo"
+}
+
+@test "sshconfig: multitarget host (secondary)" {
+  create_ssh_sandbox
+  git remote set-url origin "lab:user/repo.git"
+  run ../git-open
+  assert_output "https://gitlab.com/user/repo"
+}
+
 @test "sshconfig: inproper capitalization (no match)" {
   create_ssh_sandbox
   git remote set-url origin "git@gH:user/repo.git"
@@ -461,4 +475,9 @@ Host nohost
 # GitLab but all messed up
 host gl
   hOsTnAmE gitlab.com
+
+# Multi-target, expands hub to github.com, lab to gitlab.com
+Host hub lab
+  HostName git%h.com
+  User other
 "
