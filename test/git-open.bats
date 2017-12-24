@@ -195,6 +195,13 @@ setup() {
   assert_output "https://gitlab.com/user/repo"
 }
 
+@test "sshconfig: wildcard host" {
+  create_ssh_sandbox
+  git remote set-url origin "gh-123:user/repo.git"
+  run ../git-open
+  assert_output "https://github.com/user/repo"
+}
+
 @test "sshconfig: inproper capitalization (no match)" {
   create_ssh_sandbox
   git remote set-url origin "git@gH:user/repo.git"
@@ -468,7 +475,7 @@ Host gh
   HostName github.com
   User git
 
-# Host with no name
+# Host with no associated hostname
 Host nohost
   User other
 
@@ -480,4 +487,7 @@ host gl
 Host hub lab
   HostName git%h.com
   User other
+
+Host gh-*
+  HostName github.com
 "

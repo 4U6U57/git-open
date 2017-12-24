@@ -57,6 +57,43 @@ if [[ -z "$giturl" ]]; then
   exit 1
 fi
 
+ssh_config=~/.ssh/config
+# Resolves an ssh alias defined in ssh_config to it's corresponding hostname
+# echos out result, should be used within subshell $( ssh_resolve $host )
+# echos out nothing if alias could not be resolved
+ssh_resolve() {
+  domain="$1"
+    ssh_found=true
+  # Filter to only ssh_config lines that start with "Host" or "HostName"
+  while read -r ssh_line; do
+    # Split each line by spaces, of the form:
+    # Host alias [alias...]
+    # Host regex
+    # HostName resolved.domain.com
+    read -r -a ssh_array <<<"${ssh_line}"
+    ssh_optcode="${ssh_array[0]}"
+    if [[ ${ssh_optcode^^} == HOST ]]; then
+      # Host
+      ssh_found=false
+      # Iterate through aliases looking for a match
+      for ssh_index in $(seq 1 $((${#ssh_array[@]} - 1))); do
+        ssh_host=${ssh_array[$ssh_index]}
+        # shellcheck disable=SC2053
+        if [[ $domain == $ssh_host ]]; then
+          # Found a match, next HostName entry will be returned while matched
+          ssh_found=true
+          break
+        fi
+      done
+    elif $ssh_found && [[ ${ssh_optcode^^} == HOSTNAME ]]; then
+      # HostName, but only if ssh_found is true (the last Host entry matched)
+      # Replace all instances of %h with the Host alias
+      echo "${ssh_array[1]//%h/$domain}"
+      exit
+    fi
+  done < <(grep -Pi "^\\s*Host(Name)?\\s+" $ssh_config)
+}
+
 # From git-fetch(5), native protocols:
 # ssh://[user@]host.xz[:port]/path/to/repo.git/
 # git://host.xz[:port]/path/to/repo.git/
@@ -87,19 +124,12 @@ else
   domain=${uri%%:*}
   urlpath=${uri#*:}
 
-  # Search SSH config to resolve domain if aliased
-  sshconfig=~/.ssh/config
-  # Only do this if SSH config file exists
-  if [[ -e $sshconfig ]]; then
-    domain_resolv=$(awk -v host_name="$domain" '
-      tolower($1) == "host" { host_match=0; for(i = 2; i <= NF; i++) if($i == host_name) host_match=1; }
-      host_match && tolower($1) == "hostname" { host_name=$2 }
-      END { print host_name }
-      ' ~/.ssh/config)
-    # If we are able to resolve domain, overwrite it with the actual hostname
-    # We replace any instance of %h in the hostname with the original hostname,
-    # as per the sshconfig spec
-    domain=${domain_resolv//%h/$domain}
+  # Resolve sshconfig aliases
+  if [[ -e "$ssh_config" ]]; then
+    domain_resolv=$(ssh_resolve "$domain")
+    if [[ ! -z "$domain_resolv" ]]; then
+      domain="$domain_resolv"
+    fi
   fi
 fi
 
