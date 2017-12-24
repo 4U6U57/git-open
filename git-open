@@ -57,7 +57,7 @@ if [[ -z "$giturl" ]]; then
   exit 1
 fi
 
-ssh_config=~/.ssh/config
+ssh_config=${ssh_config:=-~/.ssh/config}
 # Resolves an ssh alias defined in ssh_config to it's corresponding hostname
 # echos out result, should be used within subshell $( ssh_resolve $host )
 # echos out nothing if alias could not be resolved
