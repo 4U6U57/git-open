@@ -88,7 +88,7 @@ ssh_resolve() {
     elif $ssh_found && [[ ${ssh_optcode^^} == HOSTNAME ]]; then
       # HostName, but only if ssh_found is true (the last Host entry matched)
       # Replace all instances of %h with the Host alias
-      echo ${ssh_array[1]//%h/$domain}
+      echo "${ssh_array[1]//%h/$domain}"
     fi
   done < <(grep -Pi "^\\s*Host(Name)?\\s+" $ssh_config))
   # Take only the last resolved hostname (multiple are overridden)
