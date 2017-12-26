@@ -222,7 +222,7 @@ setup() {
 @test "sshconfig: host wildcard *" {
   create_ssh_sandbox
   for str in "" "-prod" "-dev"; do
-    git remote set-url origin "zero$i:user/repo.git"
+    git remote set-url origin "zero$str:user/repo.git"
     run ../git-open
     assert_output "https://zero.com/user/repo"
   done
@@ -230,10 +230,10 @@ setup() {
 
 @test "sshconfig: host wildcard * with substitution" {
   create_ssh_sandbox
-  for i in "" "-prod" "-dev"; do
-    git remote set-url origin "subzero$i:user/repo.git"
+  for str in "" "-prod" "-dev"; do
+    git remote set-url origin "subzero$str:user/repo.git"
     run ../git-open
-    assert_output "https://subzero$i.zero/user/repo"
+    assert_output "https://subzero$str.zero/user/repo"
   done
 }
 
@@ -261,6 +261,13 @@ setup() {
   git remote set-url origin "subone:user/repo.git"
   run ../git-open
   refute_output "https://subone.one/user/repo"
+}
+
+@test "sshconfig: overriding host" {
+  create_ssh_sandbox
+  git remote set-url origin "zero-override:user/repo.git"
+  run ../git-open
+  assert_output "https://override.zero.com/user/repo"
 }
 
 ##
@@ -545,5 +552,9 @@ Host one?
 
 Host subone?
   HostName %h.one
+  User git
+
+Host zero-override
+  HostName override.zero.com
   User git
 "
