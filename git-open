@@ -57,7 +57,7 @@ if [[ -z "$giturl" ]]; then
   exit 1
 fi
 
-ssh_config=${ssh_config:=-~/.ssh/config}
+ssh_config=${ssh_config:-~/.ssh/config}
 # Resolves an ssh alias defined in ssh_config to it's corresponding hostname
 # echos out result, should be used within subshell $( ssh_resolve $host )
 # echos out nothing if alias could not be resolved
@@ -90,7 +90,7 @@ ssh_resolve() {
       # Replace all instances of %h with the Host alias
       echo "${ssh_array[1]//%h/$domain}"
     fi
-  done < <(grep -Pi "^\\s*Host(Name)?\\s+" $ssh_config))
+  done < <(grep -Pi "^\\s*Host(Name)?\\s+" "$ssh_config"))
   # Take only the last resolved hostname (multiple are overridden)
   tail -1 <<<"$resolved"
 }
