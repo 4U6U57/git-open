@@ -90,7 +90,7 @@ ssh_resolve() {
       # Replace all instances of %h with the Host alias
       echo "${ssh_array[1]//%h/$domain}"
     fi
-  done < <(grep -Pi "^\\s*Host(Name)?\\s+" "$ssh_config"))
+  done < <(grep -iE "^\\s*Host(Name)?\\s+" "$ssh_config"))
   # Take only the last resolved hostname (multiple are overridden)
   tail -1 <<<"$resolved"
 }
